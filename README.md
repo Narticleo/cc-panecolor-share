@@ -8,13 +8,14 @@ picked automatically when it opens.
 ```
 bgcolor ls              list available colors with a live swatch preview
 bgcolor set NAME        set this pane's background to NAME (or a #rrggbb hex)
-bgcolor rd              pick and set a random color (excludes white/cream)
+bgcolor rd              pick and set a random color, never repeating the
+                        current one (also excludes white/cream)
 bgcolor reset           restore this pane's default background
 
 bgstyle ls              list available retro/OS-shell styles (powershell, cmd,
                         dos, amber, green, matrix, c64, neon...) with a preview
 bgstyle set NAME        set this pane's background+foreground to NAME's pair
-bgstyle rd              pick and set a random style
+bgstyle rd              pick and set a random style, never repeating the current one
 bgstyle reset           restore this pane's default background+foreground
 ```
 

@@ -8,12 +8,13 @@
 # Usage:
 #   bgcolor ls              list available colors with a live swatch preview
 #   bgcolor set NAME        set this pane's background to NAME (or a #rrggbb hex)
-#   bgcolor rd              pick and set a random color (excludes white/cream)
+#   bgcolor rd              pick and set a random color, never repeating the
+#                           current one (excludes white/cream too)
 #   bgcolor reset           restore this pane's default background
 #   bgstyle ls              list available retro/OS-shell styles (powershell, cmd,
 #                           dos, amber, green, matrix, c64...) with a live preview
 #   bgstyle set NAME        set this pane's background+foreground to NAME's pair
-#   bgstyle rd              pick and set a random style
+#   bgstyle rd              pick and set a random style, never repeating the current one
 #   bgstyle reset           restore this pane's default background+foreground
 #
 # Every new interactive pane also gets a random bgcolor automatically on open (see
@@ -107,14 +108,28 @@ bgcolor() {
         return 1
       fi
       printf '\033]11;%s\007' "$hex"
+      typeset -g BGCOLOR_CURRENT=$hex
       ;;
     rd)
       local -a pool
       pool=(${(k)BGCOLOR_PALETTE:#(white|cream)})
+      # exclude the current color by hex (names don't map 1:1 to hex, since a
+      # hex was possibly set directly), falling back to the full pool if that
+      # would empty it out (e.g. only one non-white/cream entry left)
+      if [[ -n "$BGCOLOR_CURRENT" ]]; then
+        local -a filtered=()
+        local name
+        for name in $pool; do
+          [[ "${BGCOLOR_PALETTE[$name]}" == "$BGCOLOR_CURRENT" ]] && continue
+          filtered+=("$name")
+        done
+        (( ${#filtered} > 0 )) && pool=($filtered)
+      fi
       bgcolor set "${pool[$(( RANDOM % ${#pool} + 1 ))]}"
       ;;
     reset)
       printf '\033]111\007'
+      unset BGCOLOR_CURRENT
       ;;
     *)
       print -u2 "usage: bgcolor [ls|set NAME|rd|reset]"
@@ -140,15 +155,18 @@ bgstyle() {
       fi
       printf '\033]11;%s\007' "$bg"
       printf '\033]10;%s\007' "$fg"
+      typeset -g BGSTYLE_CURRENT=$name
       ;;
     rd)
       local -a pool
-      pool=(${(k)BGSTYLE_BG})
+      pool=(${(k)BGSTYLE_BG:#$BGSTYLE_CURRENT})
+      (( ${#pool} == 0 )) && pool=(${(k)BGSTYLE_BG})
       bgstyle set "${pool[$(( RANDOM % ${#pool} + 1 ))]}"
       ;;
     reset)
       printf '\033]111\007'
       printf '\033]110\007'
+      unset BGSTYLE_CURRENT
       ;;
     *)
       print -u2 "usage: bgstyle [ls|set NAME|rd|reset]"
