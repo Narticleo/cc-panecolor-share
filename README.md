@@ -8,16 +8,19 @@ picked automatically when it opens.
 ```
 bgcolor ls              list available colors with a live swatch preview
 bgcolor set NAME        set this pane's background to NAME (or a #rrggbb hex)
+bgcolor rd              pick and set a random color (excludes white/cream)
 bgcolor reset           restore this pane's default background
 
 bgstyle ls              list available retro/OS-shell styles (powershell, cmd,
                         dos, amber, green, matrix, c64, neon...) with a preview
 bgstyle set NAME        set this pane's background+foreground to NAME's pair
+bgstyle rd              pick and set a random style
 bgstyle reset           restore this pane's default background+foreground
 ```
 
 Every new interactive shell also gets a random `bgcolor` automatically — reset it
-or pick a different one any time, it never touches any other pane or window.
+or pick a different one any time (`bgcolor rd`), it never touches any other pane
+or window.
 
 ## How it works
 

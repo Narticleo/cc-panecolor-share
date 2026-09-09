@@ -8,10 +8,12 @@
 # Usage:
 #   bgcolor ls              list available colors with a live swatch preview
 #   bgcolor set NAME        set this pane's background to NAME (or a #rrggbb hex)
+#   bgcolor rd              pick and set a random color (excludes white/cream)
 #   bgcolor reset           restore this pane's default background
 #   bgstyle ls              list available retro/OS-shell styles (powershell, cmd,
 #                           dos, amber, green, matrix, c64...) with a live preview
 #   bgstyle set NAME        set this pane's background+foreground to NAME's pair
+#   bgstyle rd              pick and set a random style
 #   bgstyle reset           restore this pane's default background+foreground
 #
 # Every new interactive pane also gets a random bgcolor automatically on open (see
@@ -106,11 +108,16 @@ bgcolor() {
       fi
       printf '\033]11;%s\007' "$hex"
       ;;
+    rd)
+      local -a pool
+      pool=(${(k)BGCOLOR_PALETTE:#(white|cream)})
+      bgcolor set "${pool[$(( RANDOM % ${#pool} + 1 ))]}"
+      ;;
     reset)
       printf '\033]111\007'
       ;;
     *)
-      print -u2 "usage: bgcolor [ls|set NAME|reset]"
+      print -u2 "usage: bgcolor [ls|set NAME|rd|reset]"
       return 1
       ;;
   esac
@@ -134,12 +141,17 @@ bgstyle() {
       printf '\033]11;%s\007' "$bg"
       printf '\033]10;%s\007' "$fg"
       ;;
+    rd)
+      local -a pool
+      pool=(${(k)BGSTYLE_BG})
+      bgstyle set "${pool[$(( RANDOM % ${#pool} + 1 ))]}"
+      ;;
     reset)
       printf '\033]111\007'
       printf '\033]110\007'
       ;;
     *)
-      print -u2 "usage: bgstyle [ls|set NAME|reset]"
+      print -u2 "usage: bgstyle [ls|set NAME|rd|reset]"
       return 1
       ;;
   esac
@@ -161,13 +173,11 @@ bgstyle() {
 # for that cycle. So even inside the first precmd, `[[ -t 1 ]]` can still read false;
 # retry on precmd instead of self-removing until it actually succeeds (fd 1 is back
 # by the 2nd precmd cycle, i.e. right after the first prompt has been shown).
+# Delegates to `bgcolor rd` (same random-pick logic, minus white/cream).
 _bgcolor_autopick() {
   [[ -t 1 ]] || return
   add-zsh-hook -d precmd _bgcolor_autopick
-  typeset -a _bgcolor_autopool
-  _bgcolor_autopool=(${(k)BGCOLOR_PALETTE:#(white|cream)})
-  bgcolor set "${_bgcolor_autopool[$(( RANDOM % ${#_bgcolor_autopool} + 1 ))]}"
-  unset _bgcolor_autopool
+  bgcolor rd
 }
 if [[ -o interactive ]] && [[ -z "$BGCOLOR_AUTO_DONE" ]]; then
   export BGCOLOR_AUTO_DONE=1

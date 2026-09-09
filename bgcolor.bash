@@ -10,10 +10,12 @@
 # Usage:
 #   bgcolor ls              list available colors with a live swatch preview
 #   bgcolor set NAME        set this pane's background to NAME (or a #rrggbb hex)
+#   bgcolor rd              pick and set a random color (excludes white/cream)
 #   bgcolor reset           restore this pane's default background
 #   bgstyle ls              list available retro/OS-shell styles (powershell, cmd,
 #                           dos, amber, green, matrix, c64, neon...) with a preview
 #   bgstyle set NAME        set this pane's background+foreground to NAME's pair
+#   bgstyle rd              pick and set a random style
 #   bgstyle reset           restore this pane's default background+foreground
 #
 # Every new interactive shell also gets a random bgcolor automatically on open (see
@@ -108,11 +110,20 @@ bgcolor() {
       fi
       printf '\033]11;%s\007' "$hex"
       ;;
+    rd)
+      local -a pool=()
+      local name
+      for name in "${!BGCOLOR_PALETTE[@]}"; do
+        [[ "$name" == white || "$name" == cream ]] && continue
+        pool+=("$name")
+      done
+      bgcolor set "${pool[$(( RANDOM % ${#pool[@]} ))]}"
+      ;;
     reset)
       printf '\033]111\007'
       ;;
     *)
-      echo "usage: bgcolor [ls|set NAME|reset]" >&2
+      echo "usage: bgcolor [ls|set NAME|rd|reset]" >&2
       return 1
       ;;
   esac
@@ -136,12 +147,16 @@ bgstyle() {
       printf '\033]11;%s\007' "$bg"
       printf '\033]10;%s\007' "$fg"
       ;;
+    rd)
+      local -a pool=("${!BGSTYLE_BG[@]}")
+      bgstyle set "${pool[$(( RANDOM % ${#pool[@]} ))]}"
+      ;;
     reset)
       printf '\033]111\007'
       printf '\033]110\007'
       ;;
     *)
-      echo "usage: bgstyle [ls|set NAME|reset]" >&2
+      echo "usage: bgstyle [ls|set NAME|rd|reset]" >&2
       return 1
       ;;
   esac
@@ -156,17 +171,12 @@ bgstyle() {
 # will just show up immediately on the very first prompt instead of the second.
 # Guarded by an internal flag rather than removing itself from PROMPT_COMMAND, so it
 # becomes a single cheap variable check on every later prompt once it has run once.
+# Delegates to `bgcolor rd` (same random-pick logic, minus white/cream).
 _bgcolor_autopick() {
   [[ -n "$BGCOLOR_AUTO_PICKED" ]] && return
   [[ -t 1 ]] || return
   export BGCOLOR_AUTO_PICKED=1
-  local -a pool=()
-  local name
-  for name in "${!BGCOLOR_PALETTE[@]}"; do
-    [[ "$name" == white || "$name" == cream ]] && continue
-    pool+=("$name")
-  done
-  bgcolor set "${pool[$(( RANDOM % ${#pool[@]} ))]}"
+  bgcolor rd
 }
 if [[ $- == *i* ]] && [[ -z "$BGCOLOR_AUTO_DONE" ]]; then
   export BGCOLOR_AUTO_DONE=1
